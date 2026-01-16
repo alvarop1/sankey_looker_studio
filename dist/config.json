@@ -1,0 +1,225 @@
+{
+  "data": [
+    {
+      "id": "dimensions",
+      "label": "Sankey Dimensions",
+      "elements": [
+        {
+          "id": "dimension1",
+          "label": "Level 1 (Required)",
+          "type": "DIMENSION",
+          "options": {
+            "min": 1,
+            "max": 1
+          }
+        },
+        {
+          "id": "dimension2",
+          "label": "Level 2 (Required)",
+          "type": "DIMENSION",
+          "options": {
+            "min": 1,
+            "max": 1
+          }
+        },
+        {
+          "id": "dimension3",
+          "label": "Level 3 (Optional)",
+          "type": "DIMENSION",
+          "options": {
+            "min": 0,
+            "max": 1
+          }
+        },
+        {
+          "id": "dimension4",
+          "label": "Level 4 (Optional)",
+          "type": "DIMENSION",
+          "options": {
+            "min": 0,
+            "max": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "metrics",
+      "label": "Flow Value",
+      "elements": [
+        {
+          "id": "flowMetric",
+          "label": "Flow Amount",
+          "type": "METRIC",
+          "options": {
+            "min": 1,
+            "max": 1
+          }
+        }
+      ]
+    }
+  ],
+  "style": [
+    {
+      "id": "nodeStyle",
+      "label": "Node Styling",
+      "elements": [
+        {
+          "id": "nodeWidth",
+          "label": "Node Width",
+          "type": "TEXTINPUT",
+          "defaultValue": "20"
+        },
+        {
+          "id": "nodePadding",
+          "label": "Node Padding",
+          "type": "TEXTINPUT",
+          "defaultValue": "10"
+        },
+        {
+          "id": "nodeAlignment",
+          "label": "Node Alignment",
+          "type": "SELECT_SINGLE",
+          "defaultValue": "justify",
+          "options": [
+            { "label": "Justify", "value": "justify" },
+            { "label": "Left", "value": "left" },
+            { "label": "Right", "value": "right" },
+            { "label": "Center", "value": "center" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "colorStyle",
+      "label": "Color Options",
+      "elements": [
+        {
+          "id": "colorScheme",
+          "label": "Color Scheme",
+          "type": "SELECT_SINGLE",
+          "defaultValue": "category10",
+          "options": [
+            { "label": "Category 10", "value": "category10" },
+            { "label": "Tableau 10", "value": "tableau10" },
+            { "label": "Set 3", "value": "set3" },
+            { "label": "Pastel", "value": "pastel" },
+            { "label": "Custom", "value": "custom" }
+          ]
+        },
+        {
+          "id": "customColor1",
+          "label": "Custom Color 1",
+          "type": "FILL_COLOR",
+          "defaultValue": {
+            "color": "#1f77b4"
+          }
+        },
+        {
+          "id": "customColor2",
+          "label": "Custom Color 2",
+          "type": "FILL_COLOR",
+          "defaultValue": {
+            "color": "#ff7f0e"
+          }
+        },
+        {
+          "id": "customColor3",
+          "label": "Custom Color 3",
+          "type": "FILL_COLOR",
+          "defaultValue": {
+            "color": "#2ca02c"
+          }
+        },
+        {
+          "id": "customColor4",
+          "label": "Custom Color 4",
+          "type": "FILL_COLOR",
+          "defaultValue": {
+            "color": "#d62728"
+          }
+        },
+        {
+          "id": "linkOpacity",
+          "label": "Link Opacity (0.1-1.0)",
+          "type": "TEXTINPUT",
+          "defaultValue": "0.5"
+        },
+        {
+          "id": "linkColorMode",
+          "label": "Link Color Mode",
+          "type": "SELECT_SINGLE",
+          "defaultValue": "source",
+          "options": [
+            { "label": "Source Node", "value": "source" },
+            { "label": "Target Node", "value": "target" },
+            { "label": "Gradient", "value": "gradient" },
+            { "label": "Gray", "value": "gray" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "labelStyle",
+      "label": "Label Options",
+      "elements": [
+        {
+          "id": "showLabels",
+          "label": "Show Labels",
+          "type": "CHECKBOX",
+          "defaultValue": true
+        },
+        {
+          "id": "labelFontSize",
+          "label": "Label Font Size",
+          "type": "TEXTINPUT",
+          "defaultValue": "12"
+        },
+        {
+          "id": "labelFontColor",
+          "label": "Label Font Color",
+          "type": "FILL_COLOR",
+          "defaultValue": {
+            "color": "#333333"
+          }
+        },
+        {
+          "id": "showValues",
+          "label": "Show Values",
+          "type": "CHECKBOX",
+          "defaultValue": true
+        }
+      ]
+    },
+    {
+      "id": "layoutStyle",
+      "label": "Layout Options",
+      "elements": [
+        {
+          "id": "marginTop",
+          "label": "Margin Top",
+          "type": "TEXTINPUT",
+          "defaultValue": "20"
+        },
+        {
+          "id": "marginRight",
+          "label": "Margin Right",
+          "type": "TEXTINPUT",
+          "defaultValue": "120"
+        },
+        {
+          "id": "marginBottom",
+          "label": "Margin Bottom",
+          "type": "TEXTINPUT",
+          "defaultValue": "20"
+        },
+        {
+          "id": "marginLeft",
+          "label": "Margin Left",
+          "type": "TEXTINPUT",
+          "defaultValue": "120"
+        }
+      ]
+    }
+  ],
+  "interactions": []
+}

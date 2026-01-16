@@ -1,0 +1,24 @@
+{
+  "name": "Sankey Diagram",
+  "organization": "Alvaro Padilla",
+  "description": "A multi-dimensional Sankey diagram visualization supporting 2-4 categorical dimensions. Ideal for visualizing flow data such as student score progression across testing windows, marketing funnels, user journeys, or any sequential categorical data. Configure dimensions for each stage, add a metric for flow values, and customize colors, labels, and layout through the style panel.",
+  "logoUrl": "REPLACE_WITH_YOUR_LOGO_URL",
+  "organizationUrl": "https://github.com/alvarop1/sankey_looker_studio",
+  "supportUrl": "https://github.com/alvarop1/sankey_looker_studio#support",
+  "privacyPolicyUrl": "https://github.com/alvarop1/sankey_looker_studio/blob/main/PRIVACY_POLICY.md",
+  "termsOfServiceUrl": "https://github.com/alvarop1/sankey_looker_studio/blob/main/TERMS_OF_SERVICE.md",
+  "packageUrl": "REPLACE_WITH_YOUR_DEMO_REPORT_URL",
+  "devMode": false,
+  "components": [
+    {
+      "id": "sankey",
+      "name": "Sankey Diagram",
+      "description": "Flow diagram showing relationships between 2-4 categorical dimensions with configurable colors, labels, and layout options.",
+      "iconUrl": "REPLACE_WITH_YOUR_ICON_URL",
+      "resource": {
+        "js": "index.js",
+        "config": "config.json"
+      }
+    }
+  ]
+}

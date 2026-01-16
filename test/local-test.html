@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sankey Visualization - Local Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .controls {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+    }
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .controls select, .controls input[type="range"] {
+      padding: 5px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .controls button {
+      padding: 8px 16px;
+      background: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .controls button:hover {
+      background: #3367d6;
+    }
+    #container {
+      width: 100%;
+      height: 600px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .sankey-tooltip {
+      position: absolute;
+      visibility: hidden;
+      background-color: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 1000;
+      max-width: 250px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    #error-display {
+      color: red;
+      padding: 20px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sankey Visualization - Local Test</h1>
+  <p style="margin-bottom: 15px; color: #666;">Student Score Band Flow Across Administration Windows</p>
+
+  <div class="controls">
+    <label>
+      Dimensions:
+      <select id="dimensionCount">
+        <option value="2">2 Dimensions</option>
+        <option value="3" selected>3 Dimensions</option>
+        <option value="4">4 Dimensions</option>
+      </select>
+    </label>
+    <label>
+      Color Scheme:
+      <select id="colorScheme">
+        <option value="category10">Category 10</option>
+        <option value="tableau10" selected>Tableau 10</option>
+        <option value="set3">Set 3</option>
+        <option value="pastel">Pastel</option>
+      </select>
+    </label>
+    <label>
+      Link Color:
+      <select id="linkColorMode">
+        <option value="source" selected>Source</option>
+        <option value="target">Target</option>
+        <option value="gradient">Gradient</option>
+        <option value="gray">Gray</option>
+      </select>
+    </label>
+    <label>
+      Opacity:
+      <input type="range" id="linkOpacity" min="0.1" max="1" step="0.1" value="0.5">
+    </label>
+    <button id="updateBtn">Update Chart</button>
+  </div>
+
+  <div id="error-display"></div>
+  <div id="container"></div>
+
+  <!-- Load D3 v7 -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <!-- Load d3-sankey -->
+  <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3"></script>
+
+  <script>
+    // Error handler
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      document.getElementById('error-display').style.display = 'block';
+      document.getElementById('error-display').innerHTML = 'Error: ' + msg + '<br>Line: ' + lineNo;
+      return false;
+    };
+
+    // Check if libraries loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      var errorDisplay = document.getElementById('error-display');
+
+      if (typeof d3 === 'undefined') {
+        errorDisplay.style.display = 'block';
+        errorDisplay.innerHTML = 'Error: D3 library failed to load. Check your internet connection.';
+        return;
+      }
+
+      if (typeof d3.sankey === 'undefined') {
+        errorDisplay.style.display = 'block';
+        errorDisplay.innerHTML = 'Error: d3-sankey library failed to load. Check your internet connection.';
+        return;
+      }
+
+      console.log('D3 version:', d3.version);
+      console.log('d3.sankey available:', typeof d3.sankey);
+
+      // ==========================================
+      // Sample Data
+      // ==========================================
+
+      var mockData2Dim = {
+        tables: {
+          DEFAULT: [
+            { dimension1: ['Below Basic'], dimension2: ['Below Basic'], flowMetric: [45] },
+            { dimension1: ['Below Basic'], dimension2: ['Basic'], flowMetric: [80] },
+            { dimension1: ['Below Basic'], dimension2: ['Proficient'], flowMetric: [25] },
+            { dimension1: ['Basic'], dimension2: ['Below Basic'], flowMetric: [15] },
+            { dimension1: ['Basic'], dimension2: ['Basic'], flowMetric: [120] },
+            { dimension1: ['Basic'], dimension2: ['Proficient'], flowMetric: [95] },
+            { dimension1: ['Basic'], dimension2: ['Advanced'], flowMetric: [30] },
+            { dimension1: ['Proficient'], dimension2: ['Basic'], flowMetric: [10] },
+            { dimension1: ['Proficient'], dimension2: ['Proficient'], flowMetric: [180] },
+            { dimension1: ['Proficient'], dimension2: ['Advanced'], flowMetric: [110] },
+            { dimension1: ['Advanced'], dimension2: ['Proficient'], flowMetric: [5] },
+            { dimension1: ['Advanced'], dimension2: ['Advanced'], flowMetric: [85] }
+          ]
+        },
+        fields: {
+          dimension1: [{ name: 'Window 1' }],
+          dimension2: [{ name: 'Window 2' }]
+        }
+      };
+
+      var mockData3Dim = {
+        tables: {
+          DEFAULT: [
+            { dimension1: ['Below Basic'], dimension2: ['Below Basic'], dimension3: ['Below Basic'], flowMetric: [20] },
+            { dimension1: ['Below Basic'], dimension2: ['Below Basic'], dimension3: ['Basic'], flowMetric: [25] },
+            { dimension1: ['Below Basic'], dimension2: ['Basic'], dimension3: ['Basic'], flowMetric: [45] },
+            { dimension1: ['Below Basic'], dimension2: ['Basic'], dimension3: ['Proficient'], flowMetric: [35] },
+            { dimension1: ['Basic'], dimension2: ['Basic'], dimension3: ['Basic'], flowMetric: [60] },
+            { dimension1: ['Basic'], dimension2: ['Basic'], dimension3: ['Proficient'], flowMetric: [50] },
+            { dimension1: ['Basic'], dimension2: ['Proficient'], dimension3: ['Proficient'], flowMetric: [75] },
+            { dimension1: ['Basic'], dimension2: ['Proficient'], dimension3: ['Advanced'], flowMetric: [40] },
+            { dimension1: ['Proficient'], dimension2: ['Proficient'], dimension3: ['Proficient'], flowMetric: [90] },
+            { dimension1: ['Proficient'], dimension2: ['Proficient'], dimension3: ['Advanced'], flowMetric: [65] },
+            { dimension1: ['Proficient'], dimension2: ['Advanced'], dimension3: ['Advanced'], flowMetric: [80] },
+            { dimension1: ['Advanced'], dimension2: ['Advanced'], dimension3: ['Advanced'], flowMetric: [70] }
+          ]
+        },
+        fields: {
+          dimension1: [{ name: 'Window 1' }],
+          dimension2: [{ name: 'Window 2' }],
+          dimension3: [{ name: 'Window 3' }]
+        }
+      };
+
+      var mockData4Dim = {
+        tables: {
+          DEFAULT: [
+            { dimension1: ['Below Basic'], dimension2: ['Below Basic'], dimension3: ['Basic'], dimension4: ['Basic'], flowMetric: [15] },
+            { dimension1: ['Below Basic'], dimension2: ['Basic'], dimension3: ['Basic'], dimension4: ['Proficient'], flowMetric: [25] },
+            { dimension1: ['Below Basic'], dimension2: ['Basic'], dimension3: ['Proficient'], dimension4: ['Proficient'], flowMetric: [30] },
+            { dimension1: ['Basic'], dimension2: ['Basic'], dimension3: ['Basic'], dimension4: ['Basic'], flowMetric: [35] },
+            { dimension1: ['Basic'], dimension2: ['Basic'], dimension3: ['Proficient'], dimension4: ['Proficient'], flowMetric: [45] },
+            { dimension1: ['Basic'], dimension2: ['Proficient'], dimension3: ['Proficient'], dimension4: ['Advanced'], flowMetric: [50] },
+            { dimension1: ['Proficient'], dimension2: ['Proficient'], dimension3: ['Proficient'], dimension4: ['Proficient'], flowMetric: [55] },
+            { dimension1: ['Proficient'], dimension2: ['Proficient'], dimension3: ['Advanced'], dimension4: ['Advanced'], flowMetric: [60] },
+            { dimension1: ['Proficient'], dimension2: ['Advanced'], dimension3: ['Advanced'], dimension4: ['Advanced'], flowMetric: [40] },
+            { dimension1: ['Advanced'], dimension2: ['Advanced'], dimension3: ['Advanced'], dimension4: ['Advanced'], flowMetric: [50] }
+          ]
+        },
+        fields: {
+          dimension1: [{ name: 'Window 1' }],
+          dimension2: [{ name: 'Window 2' }],
+          dimension3: [{ name: 'Window 3' }],
+          dimension4: [{ name: 'Final' }]
+        }
+      };
+
+      var dataSets = { '2': mockData2Dim, '3': mockData3Dim, '4': mockData4Dim };
+
+      // ==========================================
+      // Data Transformation
+      // ==========================================
+
+      function createNodeId(value, level) {
+        return 'L' + level + ':' + value;
+      }
+
+      function transformToSankey(data) {
+        var rows = data.tables.DEFAULT || [];
+
+        if (!rows || rows.length === 0) {
+          return { nodes: [], links: [], levelCount: 0, dimensionLabels: [] };
+        }
+
+        var dimensionKeys = ['dimension1', 'dimension2', 'dimension3', 'dimension4']
+          .filter(function(key) {
+            var firstRow = rows[0];
+            return firstRow[key] !== undefined &&
+                   firstRow[key] !== null &&
+                   firstRow[key].length > 0 &&
+                   firstRow[key][0] !== null;
+          });
+
+        var levelCount = dimensionKeys.length;
+
+        if (levelCount < 2) {
+          return { nodes: [], links: [], levelCount: 0, dimensionLabels: [] };
+        }
+
+        var dimensionLabels = dimensionKeys.map(function(key, i) {
+          if (data.fields && data.fields[key] && data.fields[key][0]) {
+            return data.fields[key][0].name;
+          }
+          return 'Level ' + (i + 1);
+        });
+
+        var nodeMap = {};
+        var linkMap = {};
+
+        rows.forEach(function(row) {
+          var metricValue = Array.isArray(row.flowMetric)
+            ? (row.flowMetric[0] || 0)
+            : (row.flowMetric || 0);
+
+          if (metricValue <= 0) return;
+
+          var values = dimensionKeys.map(function(key) {
+            var val = row[key];
+            return Array.isArray(val) ? val[0] : val;
+          }).filter(function(v) { return v !== null && v !== undefined; });
+
+          if (values.length < 2) return;
+
+          values.forEach(function(value, levelIndex) {
+            var nodeId = createNodeId(String(value), levelIndex);
+
+            if (nodeMap[nodeId]) {
+              nodeMap[nodeId].totalValue += metricValue;
+            } else {
+              nodeMap[nodeId] = {
+                id: nodeId,
+                name: String(value),
+                level: levelIndex,
+                totalValue: metricValue
+              };
+            }
+          });
+
+          for (var i = 0; i < values.length - 1; i++) {
+            var sourceId = createNodeId(String(values[i]), i);
+            var targetId = createNodeId(String(values[i + 1]), i + 1);
+            var linkKey = sourceId + '->' + targetId;
+
+            if (linkMap[linkKey]) {
+              linkMap[linkKey].value += metricValue;
+            } else {
+              linkMap[linkKey] = {
+                source: sourceId,
+                target: targetId,
+                value: metricValue
+              };
+            }
+          }
+        });
+
+        // Convert to arrays
+        var nodes = Object.keys(nodeMap).map(function(id) { return nodeMap[id]; });
+        var links = Object.keys(linkMap).map(function(key, i) {
+          var link = linkMap[key];
+          return {
+            source: link.source,  // Keep as string ID - d3-sankey will resolve via nodeId
+            target: link.target,  // Keep as string ID
+            value: link.value,
+            index: i
+          };
+        });
+
+        console.log('Nodes:', nodes);
+        console.log('Links:', links);
+
+        return { nodes: nodes, links: links, levelCount: levelCount, dimensionLabels: dimensionLabels };
+      }
+
+      // ==========================================
+      // Color Scale
+      // ==========================================
+
+      function getColorScale(scheme) {
+        var schemes = {
+          'category10': d3.schemeCategory10,
+          'tableau10': d3.schemeTableau10,
+          'set3': d3.schemeSet3,
+          'pastel': d3.schemePastel1.concat(d3.schemePastel2)
+        };
+        var colors = schemes[scheme] || d3.schemeCategory10;
+        return d3.scaleOrdinal().domain(d3.range(10)).range(colors);
+      }
+
+      // ==========================================
+      // Render Chart
+      // ==========================================
+
+      function renderChart() {
+        try {
+          var container = document.getElementById('container');
+          var dimCount = document.getElementById('dimensionCount').value;
+          var colorScheme = document.getElementById('colorScheme').value;
+          var linkColorMode = document.getElementById('linkColorMode').value;
+          var linkOpacity = parseFloat(document.getElementById('linkOpacity').value);
+
+          var mockData = dataSets[dimCount];
+          var sankeyData = transformToSankey(mockData);
+
+          console.log('Sankey data:', sankeyData);
+
+          // Clear container
+          d3.select(container).selectAll('*').remove();
+
+          var rect = container.getBoundingClientRect();
+          var width = rect.width;
+          var height = rect.height;
+
+          console.log('Container size:', width, 'x', height);
+
+          if (width <= 0 || height <= 0) {
+            console.error('Container has no size');
+            return;
+          }
+
+          var margins = { top: 50, right: 150, bottom: 20, left: 150 };
+          var innerWidth = width - margins.left - margins.right;
+          var innerHeight = height - margins.top - margins.bottom;
+
+          // Create SVG
+          var svg = d3.select(container)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .style('font-family', 'sans-serif');
+
+          var g = svg.append('g')
+            .attr('transform', 'translate(' + margins.left + ',' + margins.top + ')');
+
+          // Create sankey generator
+          var sankeyGenerator = d3.sankey()
+            .nodeId(function(d) { return d.id; })
+            .nodeAlign(d3.sankeyJustify)
+            .nodeWidth(20)
+            .nodePadding(15)
+            .extent([[0, 0], [innerWidth, innerHeight]]);
+
+          // Generate layout
+          var graph = sankeyGenerator({
+            nodes: sankeyData.nodes.map(function(d) { return Object.assign({}, d); }),
+            links: sankeyData.links.map(function(d) { return Object.assign({}, d); })
+          });
+
+          console.log('Graph generated:', graph);
+
+          var colorScale = getColorScale(colorScheme);
+
+          // Create gradients if needed
+          if (linkColorMode === 'gradient') {
+            var defs = g.append('defs');
+            graph.links.forEach(function(link, i) {
+              var gradient = defs.append('linearGradient')
+                .attr('id', 'link-gradient-' + i)
+                .attr('gradientUnits', 'userSpaceOnUse')
+                .attr('x1', link.source.x1)
+                .attr('x2', link.target.x0);
+              gradient.append('stop').attr('offset', '0%').attr('stop-color', colorScale(link.source.level));
+              gradient.append('stop').attr('offset', '100%').attr('stop-color', colorScale(link.target.level));
+            });
+          }
+
+          // Draw links
+          g.append('g')
+            .attr('fill', 'none')
+            .selectAll('path')
+            .data(graph.links)
+            .enter()
+            .append('path')
+            .attr('d', d3.sankeyLinkHorizontal())
+            .attr('stroke-width', function(d) { return Math.max(1, d.width); })
+            .attr('stroke', function(d) {
+              if (linkColorMode === 'source') return colorScale(d.source.level);
+              if (linkColorMode === 'target') return colorScale(d.target.level);
+              if (linkColorMode === 'gradient') return 'url(#link-gradient-' + d.index + ')';
+              return '#aaa';
+            })
+            .attr('stroke-opacity', linkOpacity)
+            .style('cursor', 'pointer')
+            .append('title')
+            .text(function(d) { return d.source.name + ' → ' + d.target.name + '\n' + d.value.toLocaleString(); });
+
+          // Draw nodes
+          g.append('g')
+            .selectAll('rect')
+            .data(graph.nodes)
+            .enter()
+            .append('rect')
+            .attr('x', function(d) { return d.x0; })
+            .attr('y', function(d) { return d.y0; })
+            .attr('width', function(d) { return d.x1 - d.x0; })
+            .attr('height', function(d) { return Math.max(1, d.y1 - d.y0); })
+            .attr('fill', function(d) { return colorScale(d.level); })
+            .attr('stroke', '#333')
+            .attr('stroke-width', 0.5)
+            .append('title')
+            .text(function(d) { return d.name + '\nTotal: ' + d.value.toLocaleString(); });
+
+          // Draw labels
+          g.append('g')
+            .attr('font-size', 12)
+            .selectAll('text')
+            .data(graph.nodes)
+            .enter()
+            .append('text')
+            .attr('x', function(d) { return d.x0 < innerWidth / 2 ? d.x0 - 6 : d.x1 + 6; })
+            .attr('y', function(d) { return (d.y0 + d.y1) / 2; })
+            .attr('dy', '0.35em')
+            .attr('text-anchor', function(d) { return d.x0 < innerWidth / 2 ? 'end' : 'start'; })
+            .attr('fill', '#333')
+            .text(function(d) { return d.name + ' (' + d.value.toLocaleString() + ')'; });
+
+          // Draw column headers
+          var levelPositions = {};
+          graph.nodes.forEach(function(node) {
+            if (levelPositions[node.level] === undefined) {
+              levelPositions[node.level] = { x0: node.x0, x1: node.x1 };
+            }
+          });
+
+          sankeyData.dimensionLabels.forEach(function(label, level) {
+            var pos = levelPositions[level];
+            if (pos) {
+              g.append('text')
+                .attr('x', (pos.x0 + pos.x1) / 2)
+                .attr('y', -15)
+                .attr('text-anchor', 'middle')
+                .attr('font-weight', 'bold')
+                .attr('font-size', 14)
+                .attr('fill', '#333')
+                .text(label);
+            }
+          });
+
+          console.log('Chart rendered successfully');
+
+        } catch (err) {
+          console.error('Render error:', err);
+          document.getElementById('error-display').style.display = 'block';
+          document.getElementById('error-display').innerHTML = 'Render Error: ' + err.message;
+        }
+      }
+
+      // Attach event listener
+      document.getElementById('updateBtn').addEventListener('click', renderChart);
+
+      // Initial render
+      renderChart();
+
+      // Re-render on window resize
+      window.addEventListener('resize', renderChart);
+    });
+  </script>
+</body>
+</html>
